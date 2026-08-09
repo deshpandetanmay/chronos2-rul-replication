@@ -93,11 +93,23 @@ def main() -> int:
         extract_meta[split] = meta
         for r in embed.REDUCTIONS:
             feats_by_red[r][split] = f[r]
-    total_extract = time.perf_counter() - t_all
-    print(f"  total extraction wall-clock: {total_extract:.1f}s for "
-          f"{sum(len(b.idx[s]) for s in ('train','calib','eval')):,} windows")
-    report["extraction"] = {"per_split": extract_meta,
-                            "total_wall_seconds": total_extract}
+    # Sum the MEASURED per-split extraction time, not the loop timer: on a cache hit
+    # the loop takes ~0.4s and reporting that as "extraction wall-clock" is simply
+    # false. The measured values come from the .meta.json sidecars (D-019).
+    measured = sum(m.get("wall_seconds", 0.0) for m in extract_meta.values())
+    loop_elapsed = time.perf_counter() - t_all
+    all_cached = all(m.get("from_cache") for m in extract_meta.values())
+    n_win = sum(len(b.idx[s]) for s in ("train", "calib", "eval", OFFICIAL_SPLIT))
+    print(f"  extraction wall-clock: {measured:.1f}s measured over {n_win:,} windows"
+          + (f"  (this run reused cached embeddings in {loop_elapsed:.1f}s)"
+             if all_cached else ""))
+    report["extraction"] = {
+        "per_split": extract_meta,
+        "measured_wall_seconds": measured,
+        "loop_elapsed_seconds": loop_elapsed,
+        "all_from_cache_this_run": all_cached,
+        "n_windows": n_win,
+    }
 
     d_in = feats_by_red[C.REDUCTION_PRIMARY]["train"].shape[1]
     m0 = extract_meta.get("train", {})

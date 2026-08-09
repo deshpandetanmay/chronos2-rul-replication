@@ -27,47 +27,12 @@ from .dataset import OFFICIAL_SPLIT, Bundle
 
 
 # ------------------------------------------------------------------ features
-
-SUMMARY_STATS = ("mean", "std", "min", "max", "first", "last", "slope")
-
-
-def summary_features(win: np.ndarray) -> np.ndarray:
-    """Per-channel window summaries -> (n, n_channels * 7).
-
-    Exactly the set the brief specifies: mean, std, min, max, first, last, linear
-    slope. The slope is the OLS coefficient of the channel against cycle index,
-    computed in closed form against a fixed, mean-centred time base (the same for
-    every window, since every window has length L).
-    """
-    n, L, D = win.shape
-    tt = np.arange(L, dtype=np.float64)
-    tc = tt - tt.mean()
-    denom = float((tc**2).sum())  # constant across windows
-
-    feats = [
-        win.mean(axis=1),
-        win.std(axis=1, ddof=0),
-        win.min(axis=1),
-        win.max(axis=1),
-        win[:, 0, :],
-        win[:, -1, :],
-        np.einsum("nld,l->nd", win.astype(np.float64), tc) / denom,
-    ]
-    return np.concatenate([f.astype(np.float64) for f in feats], axis=1)
-
-
-def summary_feature_names(channels: list[str]) -> list[str]:
-    return [f"{c}__{s}" for s in SUMMARY_STATS for c in channels]
-
-
-def raw_features(win: np.ndarray) -> np.ndarray:
-    """Flattened raw window -> (n, L * n_channels), cycle-major."""
-    n = win.shape[0]
-    return win.reshape(n, -1).astype(np.float64)
-
-
-def raw_feature_names(channels: list[str], lookback: int) -> list[str]:
-    return [f"{c}__lag{lookback - 1 - i}" for i in range(lookback) for c in channels]
+# Definitions live in features.py so the ridge probe can reuse them without importing
+# LightGBM; re-exported here for readability of the arms below.
+from .features import (  # noqa: E402
+    SUMMARY_STATS, raw_features, raw_feature_names, summary_features,
+    summary_feature_names,
+)
 
 
 # ------------------------------------------------------------------ arms

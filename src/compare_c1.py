@@ -140,6 +140,35 @@ def main() -> int:
         report[("primary" if label == "PRIMARY" else "secondary") + "_paired"] = pairs
         print()
 
+    # ------------------------------------------------- M3: ratios with intervals
+    hr("NORMALISED ERROR (RMSE / trivial marginal) WITH CLUSTERED INTERVALS")
+    print("  The only quantity comparable across look-backs, because each look-back has")
+    print("  its own evaluation set. Bootstrap resamples units and re-forms the ratio.\n")
+    print(f"  {'arm':<20}{'v':>2}{'L=%d' % C.LOOKBACK:>26}"
+          f"{'L=%d' % C.LOOKBACK_SECONDARY:>26}")
+    ratios = {}
+    for variant in ("A", "B"):
+        for arm in ("lgbm_summary", "lgbm_raw", "tsfm", "control_randproj"):
+            cells = []
+            for L in (C.LOOKBACK, C.LOOKBACK_SECONDARY):
+                try:
+                    p_arm, p_tri = _load(arm, variant, L), _load("trivial", variant, L)
+                except FileNotFoundError:
+                    cells.append("--"); continue
+                y = p_arm.y_true
+
+                def stat(rows, pa=p_arm.pred, pt=p_tri.pred, y=y):
+                    ra = np.sqrt(np.mean((pa[rows] - y[rows]) ** 2))
+                    rt = np.sqrt(np.mean((pt[rows] - y[rows]) ** 2))
+                    return float(ra / rt)
+
+                d = metrics.clustered_bootstrap(p_arm.unit, stat)
+                ratios[f"{arm}__{variant}__L{L}"] = d
+                cells.append("%.3f [%.3f, %.3f]" % (d["point"], d["ci_lo"], d["ci_hi"]))
+            print(f"  {arm:<20}{variant:>2}{cells[0]:>26}{cells[1]:>26}")
+    report["ratios"] = ratios
+    print()
+
     # -------------------------------------------------------------- controls
     hr("CONTROLS vs THE INTACT TSFM ARM (L=%d) -- attribution, not contamination testing"
        % C.LOOKBACK)

@@ -93,6 +93,11 @@ def main() -> int:
     p3 = json.loads((C.RESULTS / "phase3_report.json").read_text())
     c1 = json.loads((C.RESULTS / "c1_comparison.json").read_text())
     diag = json.loads((C.RESULTS / "diag_head_budget.json").read_text())
+    seed = json.loads((C.RESULTS / "seed_study.json").read_text())
+    ridge = json.loads((C.RESULTS / "ridge_probe.json").read_text())
+    clus = json.loads((C.RESULTS / "conformal_cluster.json").read_text())
+    eqv = json.loads((C.RESULTS / "equivariance.json").read_text())
+    std = json.loads((C.RESULTS / "standard_protocol.json").read_text())
 
     # ---------------------------------------------------------------- setup facts
     m.add("nUnits", p1["train_file"]["n_units"])
@@ -131,7 +136,8 @@ def main() -> int:
     m.add("backboneHeadRatio", f"{p3['head']['backbone_to_head_ratio']:.0f}")
     m.add("nPatchesPrimary", p3["extraction"]["per_split"]["train"]["n_patches"])
     m.add("nTokensPrimary", p3["extraction"]["per_split"]["train"]["n_tokens"])
-    m.add("extractSeconds", f"{p3['extraction']['total_wall_seconds']:.0f}")
+    m.add("extractSeconds", f"{p3['extraction']['measured_wall_seconds']:.0f}")
+    m.add("nExtractWindows", f"{p3['extraction']['n_windows']:,}")
     m.add("msPerWindow", f"{p3['extraction']['per_split']['train']['ms_per_window']:.1f}")
 
     # ---------------------------------------------------------------- C1
@@ -263,9 +269,90 @@ def main() -> int:
     base = [r for r in diag["grid"] if r["m"] == 32 and r["epochs"] == 50][0]
     m.add("diagLossDrop", f"{base['final_loss']/best['final_loss']:.1f}")
 
+    # ------------------------------------------ M6: standard-protocol comparability
+    sb = std["B"]
+    m.add("stdRmse", f"{sb['rmse']:.2f}")
+    m.add("stdRmseLo", f"{sb['rmse_ci_lo']:.2f}")
+    m.add("stdRmseHi", f"{sb['rmse_ci_hi']:.2f}")
+    m.add("stdMae", f"{sb['mae']:.2f}")
+    m.add("stdEngines", sb["n_test_engines"])
+    m.add("stdTrainWindows", f"{sb['n_train_windows']:,}")
+
+    # ------------------------------------------- lead result: equivariance
+    m.add("eqvEqui", f"{eqv['equivariance_max_abs_diff']:.1e}")
+    m.add("eqvInv", f"{eqv['variate_mean_invariance_max_abs_diff']:.1e}")
+    m.add("eqvScale", f"{eqv['effect_scale_max_abs_diff']:.2f}")
+    m.add("eqvRatio", f"{eqv['scale_over_equivariance_ratio']:,.0f}")
+    m.add("eqvNWindows", eqv["n_windows"])
+    m.add("eqvNVariates", eqv["n_variates"])
+
+    # ------------------------------------------------------- M1: seed replication
+    m.add("nSeeds", seed["n_seeds"])
+    for key, v in seed["arms"].items():
+        arm, variant = key.split("__")
+        k = arm.replace("_", "") + variant
+        m.add(f"seedmean{k}", f"{v['mean']:.2f}")
+        m.add(f"seedsd{k}", f"{v['sd']:.2f}")
+        m.add(f"seedspread{k}", f"{v['spread']:.2f}")
+        m.add(f"seedzero{k}", f"{100*v['zero_pred_fraction_mean']:.1f}")
+    m.add("seedsdMax", f"{max(v['sd'] for v in seed['arms'].values()):.2f}")
+    m.add("seedspreadMax", f"{max(v['spread'] for v in seed['arms'].values()):.2f}")
+    for key, v in seed["combined_paired"].items():
+        base, variant = key.rsplit("__", 1)
+        k = base.replace("_minus_", "Minus").replace("_", "") + variant
+        m.add(f"comb{k}", f"{v['point_mean_over_seeds']:+.2f}")
+        m.add(f"comb{k}Lo", f"{v['ci_lo']:+.2f}")
+        m.add(f"comb{k}Hi", f"{v['ci_hi']:+.2f}")
+    for key, v in seed["m2"].items():
+        src, variant = key.split("__")
+        m.add(f"mtwoGain{src}{variant}", f"{v['gain']:+.2f}")
+
+    # ---------------------------------------------------------- M4: ridge probe
+    for key, v in ridge["probes"].items():
+        name, variant = key.split("__")
+        k = name + variant
+        m.add(f"ridge{k}", f"{v['rmse']:.2f}")
+        m.add(f"ridge{k}Lo", f"{v['rmse_ci_lo']:.2f}")
+        m.add(f"ridge{k}Hi", f"{v['rmse_ci_hi']:.2f}")
+        m.add(f"ridgealpha{k}", f"{v['alpha']:.3g}")
+        m.add(f"ridgedim{k}", f"{v['dim']:,}")
+    for key, v in ridge["paired"].items():
+        base, variant = key.rsplit("__", 1)
+        k = base.replace("_minus_", "Minus").replace("_", "") + variant
+        m.add(f"rp{k}", f"{v['point']:+.2f}")
+        m.add(f"rp{k}Lo", f"{v['ci_lo']:+.2f}")
+        m.add(f"rp{k}Hi", f"{v['ci_hi']:+.2f}")
+    m.add("ridgeValUnits", ridge["n_val_units"])
+    m.add("ridgeNAlphas", len(ridge["alphas"]))
+
+    # -------------------------------------------------------- M3: ratios with CIs
+    for key, v in c1["ratios"].items():
+        arm, variant, lb = key.split("__")
+        k = arm.replace("_", "") + variant + ("Primary" if lb == f"L{C.LOOKBACK}"
+                                              else "Secondary")
+        m.add(f"rat{k}", f"{v['point']:.3f}")
+        m.add(f"rat{k}Lo", f"{v['ci_lo']:.3f}")
+        m.add(f"rat{k}Hi", f"{v['ci_hi']:.3f}")
+
+    # ------------------------------------------------------ M7: cluster conformal
+    for key, v in clus["cells"].items():
+        arm, variant = key.rsplit("__", 1)
+        k = arm.replace("_", "") + variant
+        m.add(f"clfull{k}", f"{100*v['full_coverage']:.1f}")
+        if v["cluster_coverage_mean"] is not None:
+            m.add(f"clsub{k}", f"{100*v['cluster_coverage_mean']:.1f}")
+            m.add(f"clsubsd{k}", f"{100*v['cluster_coverage_sd']:.1f}")
+            m.add(f"clsubw{k}", f"{v['cluster_width_mean']:.0f}")
+    m.add("clNDraws", clus["n_draws"])
+    m.add("clMethodTsfm", clus["cells"]["tsfm__A"]["method"])
+    m.add("clMethodTsfmq", clus["cells"]["tsfm_q__A"]["method"])
+
     (C.PAPER / "numbers.tex").write_text(m.render())
     print(f"  wrote paper/numbers.tex ({len(m.d)} macros)")
 
+    _tab_main(ev, seed, ridge)
+    _tab_ratio(c1)
+    _tab_seed(seed)
     _tab_c1(ev, df, C1_BODY, "tab_c1.tex")
     _tab_c1(ev, df, C1_FULL, "tab_c1_full.tex")
     _tab_calibration(ev, ["trivial", "lgbm_summary", "tsfm_q", "control_randproj_q"],
@@ -386,6 +473,94 @@ def _tab_regime(ev) -> None:
     lines.append(r"\end{tabular}")
     (C.PAPER / "tab_regime.tex").write_text("\n".join(lines) + "\n")
     print("  wrote paper/tab_regime.tex")
+
+
+
+
+# ---------------------------------------------------------------- new tables
+
+MAIN_ROWS = [
+    ("trivial", "Trivial marginal", None, None),
+    ("lgbm_summary", "LGBM window-summary", None, "summary"),
+    ("lgbm_raw", "LGBM raw-window", None, "raw"),
+    ("tsfm", "Chronos-2 (MSE head)", "tsfm", "chronos"),
+    ("tsfm_q", "Chronos-2 (pinball head)", "tsfm_q", None),
+    ("control_randproj", "Random projection (MSE)", "control_randproj", "randproj"),
+    ("control_randproj_q", "Random projection (pinball)", "control_randproj_q", None),
+]
+
+
+def _tab_main(ev, seed, ridge) -> None:
+    """One table answering M1 and M4: seed-aware heads beside head-free ridge probes."""
+    lines = [
+        r"\begin{tabular}{lrrrr}",
+        r"\toprule",
+        r"& \multicolumn{2}{c}{Variant A (uncapped)} & \multicolumn{2}{c}{Variant B (cap \rulCap)} \\",
+        r"\cmidrule(lr){2-3}\cmidrule(lr){4-5}",
+        r"Arm / representation & specified head & ridge probe & specified head & ridge probe \\",
+        r"\midrule",
+    ]
+    for arm, label, seed_key, ridge_key in MAIN_ROWS:
+        cells = []
+        for v in ("A", "B"):
+            if seed_key and f"{seed_key}__{v}" in seed["arms"]:
+                a = seed["arms"][f"{seed_key}__{v}"]
+                cells.append(f"{a['mean']:.2f} $\\pm$ {a['sd']:.2f}")
+            else:
+                r = one(ev, arm=arm, variant=v, metric="rmse", rul_bin="all",
+                        conformal="point")
+                cells.append(f"{r['value']:.2f}")
+            if ridge_key and f"{ridge_key}__{v}" in ridge["probes"]:
+                cells.append(f"{ridge['probes'][f'{ridge_key}__{v}']['rmse']:.2f}")
+            else:
+                cells.append("--")
+        lines.append(f"{label} & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (C.PAPER / "tab_main.tex").write_text("\n".join(lines) + "\n")
+    print("  wrote paper/tab_main.tex")
+
+
+def _tab_ratio(c1) -> None:
+    """M3: the only cross-look-back comparable quantity, with intervals."""
+    arms = ["lgbm_summary", "lgbm_raw", "tsfm", "control_randproj"]
+    lines = [
+        r"\begin{tabular}{lrrrr}",
+        r"\toprule",
+        r"& \multicolumn{2}{c}{Variant A} & \multicolumn{2}{c}{Variant B} \\",
+        r"\cmidrule(lr){2-3}\cmidrule(lr){4-5}",
+        r"Arm & $L{=}\lookback$ & $L{=}\lookbackSecondary$ & $L{=}\lookback$ & $L{=}\lookbackSecondary$ \\",
+        r"\midrule",
+    ]
+    for arm in arms:
+        cells = []
+        for v in ("A", "B"):
+            for L in (C.LOOKBACK, C.LOOKBACK_SECONDARY):
+                d = c1["ratios"].get(f"{arm}__{v}__L{L}")
+                cells.append("--" if d is None else
+                             "%.3f [%.3f, %.3f]" % (d["point"], d["ci_lo"], d["ci_hi"]))
+        lines.append(f"{LAB[arm]} & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (C.PAPER / "tab_ratio.tex").write_text("\n".join(lines) + "\n")
+    print("  wrote paper/tab_ratio.tex")
+
+
+def _tab_seed(seed) -> None:
+    """Appendix: full seed distribution and the dead-output diagnostic."""
+    lines = [
+        r"\begin{tabular}{llrrrrr}",
+        r"\toprule",
+        r"Arm & V & mean & sd & min & max & preds $=0$ \\",
+        r"\midrule",
+    ]
+    for key in sorted(seed["arms"]):
+        arm, v = key.split("__")
+        a = seed["arms"][key]
+        lines.append(f"{LAB.get(arm, arm)} & {v} & {a['mean']:.2f} & {a['sd']:.2f} & "
+                     f"{a['min']:.2f} & {a['max']:.2f} & "
+                     f"{100*a['zero_pred_fraction_mean']:.1f}\\% \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (C.PAPER / "tab_seed.tex").write_text("\n".join(lines) + "\n")
+    print("  wrote paper/tab_seed.tex")
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ import numpy as np
 
 from . import config as C, dataset, embed, head, manifest, metrics, preds
 from .dataset import OFFICIAL_SPLIT
+from .features import random_projection
 from .ompguard import assert_single_omp_runtime
 from .phase1 import hr
 from .phase3 import train_and_emit
@@ -66,15 +67,6 @@ def scramble_channels(win: np.ndarray, seed: int) -> tuple[np.ndarray, dict]:
         "seed": int(seed),
         "n_identity_permutations": int(n_identity),
     }
-
-
-def random_projection(win: np.ndarray, d_out: int, seed: int) -> np.ndarray:
-    """Fixed Gaussian projection of the flattened window to `d_out` dims."""
-    n, L, D = win.shape
-    d_in = L * D
-    rng = np.random.default_rng(seed)
-    R = rng.standard_normal((d_in, d_out), dtype=np.float32) / np.sqrt(d_in)
-    return (win.reshape(n, d_in).astype(np.float32) @ R)
 
 
 def main() -> int:

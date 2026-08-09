@@ -29,11 +29,15 @@ NOTES = ["source_paper.md", "decisions.md", "future_work.md"]
 RESULTS = ["metrics.csv", "unit_splits.json", "phase1_evidence.json",
            "phase2_report.json", "phase3_report.json", "phase4_report.json",
            "c1_comparison.json", "diag_head_budget.json", "preprocessor.json",
+           "seed_study.json", "ridge_probe.json", "conformal_cluster.json",
+           "equivariance.json", "standard_protocol.json",
            "window_index_train.parquet", "window_index_calib.parquet",
            "window_index_eval.parquet"]
 STDOUT = ["phase1_stdout.txt", "phase2_stdout.txt", "phase3_stdout.txt",
           "phase4_stdout.txt", "phase5_stdout.txt", "c1_stdout.txt",
-          "diag_head_budget_stdout.txt"]
+          "diag_head_budget_stdout.txt", "seed_study_stdout.txt",
+          "ridge_probe_stdout.txt", "conformal_cluster_stdout.txt",
+          "equivariance_stdout.txt", "standard_protocol_stdout.txt"]
 
 
 def sha256(path) -> str:

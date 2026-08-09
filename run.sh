@@ -57,6 +57,21 @@ uv run python -m src.phase4        | tee results/phase4_stdout.txt
 echo "==> phase 5: calibration analysis + figures"
 uv run python -m src.phase5        | tee results/phase5_stdout.txt
 
+echo "==> lead result: variate permutation equivariance (torch process)"
+uv run python -m src.equivariance  | tee results/equivariance_stdout.txt
+
+echo "==> head-seed replication + the MSE-vs-pinball mechanism (torch process)"
+uv run python -m src.seed_study    | tee results/seed_study_stdout.txt
+
+echo "==> ridge linear probes on the frozen representations (numpy only)"
+uv run python -m src.ridge_probe   | tee results/ridge_probe_stdout.txt
+
+echo "==> conformal variant per arm + cluster-aware calibration"
+uv run python -m src.conformal_cluster | tee results/conformal_cluster_stdout.txt
+
+echo "==> standard FD001 protocol, for external comparability only (LightGBM process)"
+uv run python -m src.standard_protocol | tee results/standard_protocol_stdout.txt
+
 echo "==> C1 adjudication (paired clustered bootstrap)"
 uv run python -m src.compare_c1    | tee results/c1_stdout.txt
 
