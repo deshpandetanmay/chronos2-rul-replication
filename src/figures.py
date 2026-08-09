@@ -209,6 +209,50 @@ def fig_coverage_by_regime(df, path, nominal=0.90):
     plt.close(fig)
 
 
+def fig_coverage_by_regime_compact(df, path, nominal=0.90, variant="A"):
+    """Body-sized version of the regime figure: one variant, two panels.
+
+    The 2x2 version is ~0.45 of a NeurIPS page at full column width. Variant A carries
+    the headline; Variant B goes to the appendix.
+    """
+    _style()
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.55), sharey=True)
+    xs = np.arange(len(BIN_ORDER))
+    for i, tag in enumerate(("marginal", "conformal")):
+        ax = axes[i]
+        ax.axhline(nominal, color=INK3, ls=(0, (4, 3)), lw=1.0, zorder=1)
+        for k, arm in enumerate(CURVE_ARMS):
+            vals, los, his = [], [], []
+            for b in BIN_ORDER:
+                s_ = _get(df, arm=arm, variant=variant, conformal=tag,
+                          metric="coverage", rul_bin=b, nominal=nominal)
+                vals.append(s_["value"].iloc[0] if len(s_) else np.nan)
+                los.append(s_["ci_lo"].iloc[0] if len(s_) else np.nan)
+                his.append(s_["ci_hi"].iloc[0] if len(s_) else np.nan)
+            if all(np.isnan(v) for v in vals):
+                continue
+            c, mk = SERIES[k % len(SERIES)], MARKERS[k % len(MARKERS)]
+            ax.fill_between(xs, los, his, color=c, alpha=0.10, lw=0, zorder=2)
+            ax.plot(xs, vals, color=c, marker=mk, mec=SURFACE, mew=0.7, zorder=3)
+        ax.annotate(f"nominal {nominal:.0%}", xy=(len(xs) - 1, nominal), xytext=(0, -11),
+                    textcoords="offset points", fontsize=6.5, color=INK2, ha="right")
+        _clean(ax, "y")
+        ax.set_xticks(xs)
+        ax.set_xticklabels([BIN_LABEL[b] for b in BIN_ORDER])
+        ax.set_xlim(-0.25, len(BIN_ORDER) - 0.75)
+        ax.set_ylim(0, 1.05)
+        ax.set_xlabel("true RUL (cycles): healthier $\\leftarrow\\!\\rightarrow$ nearer failure")
+        if i == 0:
+            ax.set_ylabel("empirical coverage")
+        ax.set_title(f"{tag} intervals", loc="left")
+    _arm_legend(fig, CURVE_ARMS, ncol=3, y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.80))
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
 # ------------------------------------------------------------------ figure 3
 
 def fig_sharpness_frontier(df, path):
@@ -386,6 +430,7 @@ def make_all(df: pd.DataFrame) -> list[str]:
     for name, fn in (
         ("fig_calibration_curves.png", fig_calibration_curves),
         ("fig_coverage_by_regime.png", fig_coverage_by_regime),
+        ("fig_coverage_by_regime_compact.png", fig_coverage_by_regime_compact),
         ("fig_sharpness_frontier.png", fig_sharpness_frontier),
         ("fig_conformal_before_after.png", fig_conformal_before_after),
         ("fig_controls.png", fig_controls),

@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 .DS_Store
 dist/
+paper/build/
+notes/
+results/
+figures/

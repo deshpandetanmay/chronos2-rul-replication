@@ -266,17 +266,26 @@ def main() -> int:
     (C.PAPER / "numbers.tex").write_text(m.render())
     print(f"  wrote paper/numbers.tex ({len(m.d)} macros)")
 
-    _tab_c1(ev, df)
-    _tab_calibration(ev)
+    _tab_c1(ev, df, C1_BODY, "tab_c1.tex")
+    _tab_c1(ev, df, C1_FULL, "tab_c1_full.tex")
+    _tab_calibration(ev, ["trivial", "lgbm_summary", "tsfm_q", "control_randproj_q"],
+                     "tab_calibration.tex")
+    _tab_calibration(ev, ["trivial", "lgbm_summary", "lgbm_raw", "tsfm", "tsfm_q",
+                          "control_randproj_q"], "tab_calibration_full.tex")
     _tab_regime(ev)
     return 0
 
 
-def _tab_c1(ev, df) -> None:
-    """Main results table: point accuracy at the primary look-back."""
-    order = ["trivial", "lgbm_summary", "lgbm_raw", "tsfm", "tsfm_q", "tsfm_abl_reg",
-             "control_randproj", "control_randproj_q", "control_chanscramble",
-             "control_shufflabel"]
+C1_BODY = ["trivial", "lgbm_summary", "lgbm_raw", "tsfm", "tsfm_q",
+           "control_randproj", "control_randproj_q"]
+C1_FULL = ["trivial", "lgbm_summary", "lgbm_raw", "tsfm", "tsfm_q", "tsfm_abl_reg",
+           "control_randproj", "control_randproj_q", "control_chanscramble",
+           "control_shufflabel"]
+
+
+def _tab_c1(ev, df, order=None, out="tab_c1.tex") -> None:
+    """Point accuracy at the primary look-back."""
+    order = order or C1_BODY
     lines = [
         r"\begin{tabular}{llrrrr}",
         r"\toprule",
@@ -302,17 +311,23 @@ def _tab_c1(ev, df) -> None:
             cells.append(f"{mae['value']:.2f}")
         grp = groups.get(arm, "control")
         lines.append(f"{LAB[arm]} & {grp} & " + " & ".join(cells) + r" \\")
-        if arm == "lgbm_raw" or arm == "tsfm_abl_reg":
+        if arm in ("lgbm_raw", "tsfm_abl_reg") or (
+                arm == "tsfm_q" and "tsfm_abl_reg" not in order):
             lines.append(r"\midrule")
     lines += [r"\bottomrule", r"\end{tabular}"]
-    (C.PAPER / "tab_c1.tex").write_text("\n".join(lines) + "\n")
-    print("  wrote paper/tab_c1.tex")
+    (C.PAPER / out).write_text("\n".join(lines) + "\n")
+    print(f"  wrote paper/{out}")
 
 
-def _tab_calibration(ev) -> None:
-    """Coverage and width, marginal vs conformal, at all five nominal levels."""
-    arms = ["trivial", "lgbm_summary", "lgbm_raw", "tsfm", "tsfm_q",
-            "control_randproj_q"]
+def _tab_calibration(ev, arms=None, out="tab_calibration.tex") -> None:
+    """Coverage and width, marginal vs conformal, at all five nominal levels.
+
+    Coverage and width share a cell as "cov (width)" rather than occupying two rows
+    each: it halves the table height without dropping the width, which must never be
+    separated from its coverage number.
+    """
+    arms = arms or ["trivial", "lgbm_summary", "lgbm_raw", "tsfm", "tsfm_q",
+                    "control_randproj_q"]
     lines = [
         r"\begin{tabular}{ll" + "r" * len(C.NOMINAL_LEVELS) + r"}",
         r"\toprule",
@@ -322,30 +337,22 @@ def _tab_calibration(ev) -> None:
     ]
     for arm in arms:
         for tag in ("marginal", "conformal"):
-            cov, wid = [], []
+            cells = []
             for lv in C.NOMINAL_LEVELS:
                 try:
                     r = one(ev, arm=arm, variant="A", metric="coverage",
                             rul_bin="all", conformal=tag, nominal=lv)
                     w = one(ev, arm=arm, variant="A", metric="width_mean",
                             rul_bin="all", conformal=tag, nominal=lv)
+                    cells.append(f"{100*r['value']:.1f} ({w['value']:.0f})")
                 except LookupError:
-                    cov.append("--"); wid.append("--"); continue
-                cov.append(f"{100*r['value']:.1f}")
-                wid.append(f"{w['value']:.0f}")
-            if all(c == "--" for c in cov):
-                lines.append(f"{LAB[arm]} & {tag} & "
-                             + " & ".join([r"\multicolumn{1}{c}{--}"] * len(cov))
-                             + r" \\")
-                continue
-            lines.append(f"{LAB[arm]} & {tag} & " + " & ".join(cov) + r" \\")
-            lines.append(r" & \emph{width} & "
-                         + " & ".join(f"\\emph{{{w}}}" for w in wid) + r" \\")
+                    cells.append("--")
+            lines.append(f"{LAB[arm]} & {tag} & " + " & ".join(cells) + r" \\")
         lines.append(r"\midrule")
     lines[-1] = r"\bottomrule"
     lines.append(r"\end{tabular}")
-    (C.PAPER / "tab_calibration.tex").write_text("\n".join(lines) + "\n")
-    print("  wrote paper/tab_calibration.tex")
+    (C.PAPER / out).write_text("\n".join(lines) + "\n")
+    print(f"  wrote paper/{out}")
 
 
 def _tab_regime(ev) -> None:

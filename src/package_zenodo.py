@@ -82,6 +82,9 @@ def main() -> int:
         take(f, f"figures/{f.name}")
     for f in sorted(C.PAPER.glob("*.tex")):
         take(f, f"paper/{f.name}")
+    # The style file and the compiled PDF, so the deposit is readable without a build.
+    take(C.PAPER / "neurips_2024.sty", "paper/neurips_2024.sty")
+    take(C.PAPER / "build" / "main.pdf", "paper/main.pdf")
     take(C.ROOT / "run_manifest.json", "run_manifest.json")
 
     # --------------------------------------------------------------- splits
