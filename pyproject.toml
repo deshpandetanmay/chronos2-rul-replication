@@ -1,0 +1,17 @@
+[project]
+name = "tsfmrul"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "chronos-forecasting==2.3.1",
+    "lightgbm>=4.7.0",
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.1",
+    "pandas>=3.0.5",
+    "pyarrow>=25.0.0",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.18.0",
+    "torch>=2.13.0",
+]
