@@ -42,6 +42,19 @@ def esc(s: str) -> str:
     return s.replace("_", r"\_").replace("%", r"\%")
 
 
+def sci(x: float, sig: int = 1) -> str:
+    """LaTeX scientific notation. `3.3e-06` reads as source code in a paper."""
+    from math import floor, log10
+
+    if x == 0:
+        return "0"
+    e = int(floor(log10(abs(x))))
+    m = x / 10**e
+    # Bare math content, no $ delimiters: these macros are used both inside display
+    # math (where $ would terminate it) and in running text (wrapped in $...$ there).
+    return f"{m:.{sig}f}\\times 10^{{{e}}}"
+
+
 class Macros:
     """Collects \\newcommand definitions, refusing silent redefinition."""
 
@@ -279,8 +292,8 @@ def main() -> int:
     m.add("stdTrainWindows", f"{sb['n_train_windows']:,}")
 
     # ------------------------------------------- lead result: equivariance
-    m.add("eqvEqui", f"{eqv['equivariance_max_abs_diff']:.1e}")
-    m.add("eqvInv", f"{eqv['variate_mean_invariance_max_abs_diff']:.1e}")
+    m.add("eqvEqui", sci(eqv["equivariance_max_abs_diff"]))
+    m.add("eqvInv", sci(eqv["variate_mean_invariance_max_abs_diff"]))
     m.add("eqvScale", f"{eqv['effect_scale_max_abs_diff']:.2f}")
     m.add("eqvRatio", f"{eqv['scale_over_equivariance_ratio']:,.0f}")
     m.add("eqvNWindows", eqv["n_windows"])
