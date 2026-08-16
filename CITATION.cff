@@ -1,0 +1,79 @@
+cff-version: 1.2.0
+message: >-
+  If you use this replication or its derived evaluation splits, please cite this
+  artifact and, separately, the original paper it replicates and the Chronos-2
+  checkpoint it evaluates.
+title: >-
+  Do frozen time-series foundation model embeddings help RUL prediction, and are
+  the resulting uncertainties honest? A public-data replication with a
+  calibration extension
+abstract: >-
+  A replication of "Time-Series Foundation Model Embeddings for Remaining Useful
+  Life Estimation" (arXiv:2606.11990) on the public NASA C-MAPSS FD001 benchmark,
+  extended with a calibration analysis the original does not report: coverage,
+  sharpness, regime-conditioned coverage, and split-conformal repair. Includes
+  attribution controls bounding what the frozen pretrained representation can be
+  credited with.
+type: software
+authors:
+  - family-names: Deshpande
+    given-names: Tanmay
+    email: tanmay.avinash.deshpande@gmail.com
+    affiliation: Independent Researcher
+keywords:
+  - remaining useful life
+  - predictive maintenance
+  - time-series foundation models
+  - Chronos-2
+  - uncertainty calibration
+  - conformal prediction
+  - reproducibility
+license: MIT
+version: 1.0.0
+date-released: "2026-08-09"
+references:
+  - type: article
+    title: >-
+      Time-Series Foundation Model Embeddings for Remaining Useful Life Estimation
+    authors:
+      - family-names: El-Ghoussani
+        given-names: Amir
+      - family-names: De Vita
+        given-names: Michele
+      - family-names: Naumann
+        given-names: Ronald
+      - family-names: Belagiannis
+        given-names: Vasileios
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2606.11990"
+    notes: The paper replicated here.
+  - type: article
+    title: "Chronos-2: From Univariate to Universal Forecasting"
+    authors:
+      - family-names: Ansari
+        given-names: Abdul Fatir
+      - name: "and others"
+    year: 2025
+    identifiers:
+      - type: other
+        value: "arXiv:2510.15821"
+    notes: >-
+      The frozen backbone evaluated here (HuggingFace amazon/chronos-2, revision
+      29ec3766d36d6f73f0696f85560a422f50e8498c).
+  - type: conference-paper
+    title: >-
+      Damage propagation modeling for aircraft engine run-to-failure simulation
+    authors:
+      - family-names: Saxena
+        given-names: Abhinav
+      - family-names: Goebel
+        given-names: Kai
+      - family-names: Simon
+        given-names: Don
+      - family-names: Eklund
+        given-names: Neil
+    year: 2008
+    collection-title: "IEEE International Conference on Prognostics and Health Management"
+    notes: The C-MAPSS dataset and the asymmetric prognostics score.

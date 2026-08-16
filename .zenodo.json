@@ -1,0 +1,48 @@
+{
+  "title": "Permutation Equivariance Limits Frozen Time-Series Foundation Model Features for Remaining Useful Life Estimation",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "description": "<p>A public-data replication of <em>Time-Series Foundation Model Embeddings for Remaining Useful Life Estimation</em> (El-Ghoussani, De Vita, Naumann and Belagiannis, EUSIPCO 2026; arXiv:2606.11990), extended with the uncertainty analysis the original does not report.</p>\n\n<p>The original work uses a frozen Chronos-2 backbone as a feature extractor and trains a small MLP head to predict Remaining Useful Life, on proprietary industrial telemetry. This study identifies a structural property of that backbone and quantifies its consequences on the public NASA C-MAPSS FD001 benchmark.</p>\n\n<p><strong>Main findings</strong></p>\n\n<ul> <li><strong>Chronos-2 is exactly permutation-equivariant across variates.</strong> Permuting the sensor channels of an input permutes the output embeddings correspondingly, to 3.3 &times; 10<sup>-6</sup> on real windows, while the permutation itself displaces the embeddings by 6.79, a ratio of 2,035,369. The backbone therefore encodes no information about which sensor a channel is, and any variate-symmetric read-out is exactly invariant to channel permutation, so a channel-scramble control defined on such a read-out cannot detect degradation.</li> <li><strong>The accuracy claim does not replicate.</strong> At a 30-cycle look-back the frozen-embedding arm is worse than a fixed-hyperparameter LightGBM over seven per-channel window statistics (+5.98 RMSE, [+1.60, +10.07], paired, over 5 head seeds). At the 80-cycle context that the original work identifies as its optimum, the two reach parity and do not separate.</li> <li><strong>Pretraining is not distinguishable from random features at short context.</strong> Under the specified head, 5 training seeds, and a hyperparameter-free ridge probe, the frozen representation never separates from a fixed random <em>linear</em> projection of the same window at 30 cycles. It does separate at 80 cycles.</li> <li><strong>The reported uncertainty is not usable as such.</strong> A nominal 90% interval attains 36.9% empirical coverage, and the head specified in the original work emits no interval at all. Split conformal prediction restores approximately nominal coverage at 3.41 times the interval width, against 1.49 times for the baseline, and inverts rather than removes the regime-conditional failure.</li> </ul>\n\n<p><strong>Contents.</strong> Code for the full pipeline; the derived by-engine evaluation splits as explicit unit-id lists; all metrics in long format (<code>results/metrics.csv</code>); per-arm predictions; figures; the compiled paper and its LaTeX sources, in which every reported number is generated from the metrics file rather than typed; an environment manifest recording package versions, seeds, the pinned backbone revision and the device used; and a decision log documenting every judgement call, deviation from the original protocol, and bug found during the study.</p>\n\n<p><strong>Reproducing.</strong> <code>bash run.sh</code> reproduces every reported value from a clean checkout. The raw NASA C-MAPSS files are not redistributed; they are referenced by source URL and SHA-256 digest and verified at the start of every run.</p>",
+  "creators": [
+    {
+      "name": "Deshpande, Tanmay",
+      "affiliation": "Independent Researcher"
+    }
+  ],
+  "license": "cc-by-4.0",
+  "access_right": "open",
+  "language": "eng",
+  "keywords": [
+    "remaining useful life",
+    "predictive maintenance",
+    "time-series foundation models",
+    "Chronos-2",
+    "permutation equivariance",
+    "uncertainty calibration",
+    "conformal prediction",
+    "reproducibility",
+    "C-MAPSS",
+    "prognostics"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "arXiv:2606.11990",
+      "relation": "references",
+      "resource_type": "publication-preprint",
+      "scheme": "arxiv"
+    },
+    {
+      "identifier": "arXiv:2510.15821",
+      "relation": "references",
+      "resource_type": "publication-preprint",
+      "scheme": "arxiv"
+    },
+    {
+      "identifier": "10.1109/PHM.2008.4711414",
+      "relation": "references",
+      "resource_type": "publication-conferencepaper",
+      "scheme": "doi"
+    }
+  ],
+  "notes": "Code is MIT-licensed (see LICENSE); the paper, figures and derived metrics are CC-BY-4.0. See LICENSES.md. Raw NASA C-MAPSS data and Chronos-2 weights are not redistributed and are referenced by checksum and pinned revision respectively."
+}
