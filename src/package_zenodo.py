@@ -24,7 +24,8 @@ DIST = C.ROOT / "dist"
 NAME = "tsfmrul-cmapss-fd001-replication"
 
 CODE = ["src", "run.sh", "requirements.lock", "pyproject.toml", "CITATION.cff",
-        "DEVIATIONS.md", "README.md"]
+        "DEVIATIONS.md", "README.md", "LICENSE", "LICENSES.md", ".zenodo.json",
+        "ZENODO_SUBMISSION.md", "ZENODO_DESCRIPTION.html"]
 NOTES = ["source_paper.md", "decisions.md", "future_work.md"]
 RESULTS = ["metrics.csv", "unit_splits.json", "phase1_evidence.json",
            "phase2_report.json", "phase3_report.json", "phase4_report.json",

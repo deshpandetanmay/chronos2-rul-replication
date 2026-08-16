@@ -111,6 +111,18 @@ def _chip() -> str | None:
         return None
 
 
+def _redact(value):
+    """Rewrite paths under the repository root to `<repo>/...` form, recursively."""
+    root = str(C.ROOT)
+    if isinstance(value, str):
+        return value.replace(root, "<repo>")
+    if isinstance(value, dict):
+        return {k: _redact(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact(v) for v in value]
+    return value
+
+
 def build(extra: dict | None = None) -> dict:
     man = {
         "created_utc": datetime.now(timezone.utc).isoformat(),
@@ -140,7 +152,10 @@ def build(extra: dict | None = None) -> dict:
         "packages": _pkg_versions(),
         "python": {
             "version": sys.version,
-            "executable": sys.executable,
+            # Interpreter recorded relative to the repo (or by name) rather than
+            # absolutely: this file is published, and an absolute path discloses the
+            # operator's home-directory layout without aiding reproduction.
+            "executable": _redact(sys.executable),
             "implementation": platform.python_implementation(),
         },
         "platform": {
@@ -159,8 +174,13 @@ def build(extra: dict | None = None) -> dict:
 
 
 def write(man: dict, path=None) -> None:
+    """Write the manifest with repository-root paths redacted.
+
+    Applied at write time rather than at construction so that a section merged in by
+    any phase is covered, whatever it happens to contain.
+    """
     path = path or (C.ROOT / "run_manifest.json")
-    path.write_text(json.dumps(man, indent=2, default=str) + "\n")
+    path.write_text(json.dumps(_redact(man), indent=2, default=str) + "\n")
 
 
 def merge_into(section: str, payload: dict, path=None, fresh: bool = False) -> dict:

@@ -18,6 +18,7 @@ measured, see notes/source_paper.md):
 from __future__ import annotations
 
 import hashlib
+import pathlib
 import time
 
 import numpy as np
@@ -201,6 +202,14 @@ def cache_path(lookback: int, split: str, tag: str = "main"):
     return C.CACHE / f"emb_L{lookback}_{split}_{tag}.npz"
 
 
+def _rel(path) -> str:
+    """Path relative to the repository root, for artifacts that get published."""
+    try:
+        return str(pathlib.Path(path).resolve().relative_to(C.ROOT))
+    except ValueError:
+        return pathlib.Path(path).name
+
+
 def meta_path(path):
     return path.with_suffix(".meta.json")
 
@@ -236,7 +245,9 @@ def get_or_extract(
     if path.exists():
         feats = load_cache(path)
         meta = load_cache_meta(path) or {}
-        meta = {**meta, "from_cache": True, "path": str(path)}
+        # Repo-relative: an absolute path records the operator's home directory
+        # layout, which then travels into a permanently published deposit.
+        meta = {**meta, "from_cache": True, "path": _rel(path)}
         log(f"    {split}/{tag}: loaded cache {path.name} "
             f"{ {k: v.shape for k, v in feats.items()} }")
         return feats, meta, True
