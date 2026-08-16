@@ -1,5 +1,7 @@
 # Permutation Equivariance Limits Frozen Time-Series Foundation Model Features for RUL Estimation
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21970342.svg)](https://doi.org/10.5281/zenodo.21970342)
+
 Code for a public-data replication of **arXiv:2606.11990** ("Time-Series Foundation Model
 Embeddings for Remaining Useful Life Estimation", El-Ghoussani, De Vita, Naumann &
 Belagiannis, EUSIPCO 2026), extended with the uncertainty analysis the original does not
@@ -93,6 +95,15 @@ None of the original paper's numbers appear in any of our results tables.
 
 ## Citing
 
-See `CITATION.cff`. Please also cite the original paper, the Chronos-2 checkpoint
-(`amazon/chronos-2`, revision `29ec3766d36d6f73f0696f85560a422f50e8498c`) and the C-MAPSS
-dataset.
+Archived on Zenodo:
+
+- **Concept DOI** (always the latest version) — [10.5281/zenodo.21970342](https://doi.org/10.5281/zenodo.21970342)
+- **Version DOI** (these exact results) — [10.5281/zenodo.21970343](https://doi.org/10.5281/zenodo.21970343)
+
+Cite the concept DOI when referring to the work, and the version DOI when referring to a
+specific number, since a later revision creates a new version DOI under the same concept
+DOI. Machine-readable metadata is in `CITATION.cff`.
+
+Please also cite the work being replicated (El-Ghoussani et al., EUSIPCO 2026,
+arXiv:2606.11990), the Chronos-2 checkpoint (`amazon/chronos-2`, revision
+`29ec3766d36d6f73f0696f85560a422f50e8498c`) and the C-MAPSS dataset (Saxena et al., 2008).

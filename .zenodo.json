@@ -26,6 +26,12 @@
   ],
   "related_identifiers": [
     {
+      "identifier": "10.5281/zenodo.21970342",
+      "relation": "isVersionOf",
+      "resource_type": "publication-preprint",
+      "scheme": "doi"
+    },
+    {
       "identifier": "arXiv:2606.11990",
       "relation": "references",
       "resource_type": "publication-preprint",
@@ -44,5 +50,6 @@
       "scheme": "doi"
     }
   ],
-  "notes": "Code is MIT-licensed (see LICENSE); the paper, figures and derived metrics are CC-BY-4.0. See LICENSES.md. Raw NASA C-MAPSS data and Chronos-2 weights are not redistributed and are referenced by checksum and pinned revision respectively."
+  "notes": "Code is MIT-licensed (see LICENSE); the paper, figures and derived metrics are CC-BY-4.0. See LICENSES.md. Raw NASA C-MAPSS data and Chronos-2 weights are not redistributed and are referenced by checksum and pinned revision respectively.",
+  "doi": "10.5281/zenodo.21970343"
 }

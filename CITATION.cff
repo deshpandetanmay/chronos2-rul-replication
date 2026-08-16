@@ -28,9 +28,21 @@ keywords:
   - uncertainty calibration
   - conformal prediction
   - reproducibility
-license: MIT
+license: CC-BY-4.0
 version: 1.0.0
-date-released: "2026-08-09"
+date-released: "2026-08-16"
+# Version DOI: resolves to exactly these results. The concept DOI below always
+# resolves to the newest version, so cite that when referring to the work in general
+# and this one when referring to these specific numbers.
+doi: 10.5281/zenodo.21970343
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21970343
+    description: Version DOI for this release
+  - type: doi
+    value: 10.5281/zenodo.21970342
+    description: Concept DOI, always resolving to the latest version
+repository-code: "https://github.com/deshpandetanmay/chronos2-rul-replication"
 references:
   - type: article
     title: >-
